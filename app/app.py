@@ -60,26 +60,6 @@ def summarize(df):
 df = pd.read_csv(os.path.join(data_dir,data))
 df = df.set_index("DR_NO")
 
-# -- create pages --
-
-## title & about the data
-st.write("""
-         
-# Crime in Los Angeles [2020 - Present]
-**Data Source:** [Los Angeles City Crime Database](https://data.lacity.org/Public-Safety/Crime-Data-from-2020-to-Present/2nrs-mtv8)
-         
-""")
-
-## system information
-st.caption(
-    f":black[Dataset Directory:]  `{os.path.join(data_dir,data)}`"
-)
-
-
-## data table
-st.write("### Data Table")
-st.write(df, use_container_width=True)
-
 
 ## multiselect areas
 def multiselect(df):
@@ -97,9 +77,35 @@ def multiselect(df):
 def update(df):
     return multiselect(df)
 
+# -- create pages --
+
+## title & about the data
+st.write("""
+         
+# Crime in Los Angeles [2020 - Present]
+**Data Source:** [Los Angeles City Crime Database](https://data.lacity.org/Public-Safety/Crime-Data-from-2020-to-Present/2nrs-mtv8)
+         
+""")
+
+## system information
+st.caption(
+    f":black[Dataset Directory:]  `{os.path.join(data_dir,data)}`"
+)
+
+## page links
+st.page_link("demo.py", label="Home", icon="🏠")
+st.page_link("pages/select.py", label="Search", icon="1️⃣")
+# st.page_link("pages/page_2.py", label="Page 2", icon="2️⃣", disabled=True)
+# st.page_link("http://www.google.com", label="Google", icon="🌎")
+
+## data table
+st.write("### Data Table")
+st.write(df, use_container_width=True)
 
 
+## create charts
 data = update(df)
+
 st.write("### Title", data.sort_index())
 st.bar_chart(data, x="TIME OCC", y="Crm Cd 1", color="AREA NAME", use_container_width=True)
 st.bar_chart(data['AREA NAME'].value_counts(), use_container_width=True)
