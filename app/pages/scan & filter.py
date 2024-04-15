@@ -73,7 +73,8 @@ def multi_select(df, key):
     default_list = list(set(df[key]))[:3]
     all_list = list(set(df[key]))
     all_list.append("All")
-    choices = st.multiselect(f"**Choose {str(mapping_keys[key]).lower()}**", all_list.sort(), default_list)
+    all_list.sort()
+    choices = st.multiselect(f"**Choose {str(mapping_keys[key]).lower()}**", all_list, default_list)
     if not choices:
         st.error(f"Please select at least one {str(mapping_keys[key]).lower()}.")
         return df
