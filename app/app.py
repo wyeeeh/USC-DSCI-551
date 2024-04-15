@@ -5,7 +5,6 @@ import os
 import datetime
 import time
 
-
 # -- data repo --
 data_dir = os.path.join(os.getcwd(), "data")
 data = "sample_data.csv"
@@ -16,11 +15,19 @@ df = pd.read_csv(os.path.join(data_dir,data)).set_index("DR_NO")
 df['Date Rptd'] = pd.to_datetime(df['Date Rptd']).dt.strftime('%Y-%m-%d')
 df['DATE OCC'] = pd.to_datetime(df['DATE OCC']).dt.strftime('%Y-%m-%d')
 df['TIME OCC'] = df['TIME OCC'].astype(str).str.zfill(4)
+df['TIME OCC'] = pd.to_datetime(df['TIME OCC'], format='%H%M').dt.strftime('%H:%M')
+# -- data repo --
+data_dir = os.path.join(os.getcwd(), "data")
+data = "sample_data.csv"
 
+# -- load data --
+df = pd.read_csv(os.path.join(data_dir,data)).set_index("DR_NO")
+## convert date & time format
+df['Date Rptd'] = pd.to_datetime(df['Date Rptd']).dt.strftime('%Y-%m-%d')
+df['DATE OCC'] = pd.to_datetime(df['DATE OCC']).dt.strftime('%Y-%m-%d')
+df['TIME OCC'] = df['TIME OCC'].astype(str).str.zfill(4)
+df['TIME OCC'] = pd.to_datetime(df['TIME OCC'], format='%H%M').dt.strftime('%H:%M')
 
-# -- describe data --
-for col in df.columns:
-    st.write(col, df[col].dtype)
 
 # -- global variables --
 mapping_keys = {
@@ -55,8 +62,7 @@ mapping_keys = {
 }
 
 # -- config functions --
-@st.cache_data
-
+# @st.cache_data(experimental_allow_widgets=True)
 ## add data
 def add(df, key, value):
     df[key] = value
@@ -101,107 +107,37 @@ def summarize(df):
 
 
 
-# -- scan & filter data --
-
-## multiselect for categories
-def multi_select(df, key):
-    default_list = list(set(df[key]))[:3]
-    choices = st.multiselect(f"**Choose {str(mapping_keys[key]).lower()}**", set(df[key]), default_list)
-    if not choices:
-        st.error(f"Please select at least one {str(mapping_keys[key]).lower()}.")
-        return df
-    else:
-        data = df[df[key].isin(choices)]
-        return data
-    
-## slider for numeric values
-def slider(df, key):
-    default_range = (df[key].min()+100, df[key].max()-100)
-    range = st.slider("Select range", df[key].min(), df[key].max(),  default_range)
-    if not range:
-        st.error("Please select a range.")
-        return df
-    else:
-        data = df[(df[key] >= range[0]) & (df[key] <= range[1])]
-        return data
-    
-
-def date_select(df, key):
-    today = datetime.datetime.now()
-    default_range = (datetime.date(today.year, 1, 7), today)
-    range = st.date_input("Select date range", 
-                          default_range,
-                          datetime.date(2020, 1, 1),
-                          datetime.date(today.year, 12, 31),
-                          format="MM/DD/YYYY"
-                          )
-    if not range:
-        st.error("Please select a date range.")
-        return df
-    elif len(range) == 2:
-        data = df[(pd.to_datetime(df[key]) >= pd.to_datetime(range[0])) & (pd.to_datetime(df[key]) <= pd.to_datetime(range[1]))]
-        return data
-    else:
-        st.error("Please complete the date range.")
-        return df
-
-def time_select(df, key):
-    now = datetime.datetime.now()
-    start_time = st.time_input(label = "Select a time", value = datetime.time(0, 0), step=900)
-    end_time = st.time_input(label = "Select a time", value = datetime.time(23, 59), step=900)
-    range = [start_time, end_time]
-    if not range:
-        st.error("Please select a time range.")
-        return df
-    elif len(range) == 2:
-        data = df[(pd.to_datetime(df[key]) >= pd.to_datetime(range[0])) & (pd.to_datetime(df[key]) <= pd.to_datetime(range[1]))]
-        return data
-    else:
-        st.error("Please complete the time range.")
-        return df
-
-
-def update(df, key):
-    if key in ['DATE OCC', 'Date Rptd']:
-        df = date_select(df, key)
-    elif key in ['AREA NAME']:
-        df = multi_select(df, key)
-    elif key in ['TIME OCC']:
-        df = time_select(df, key)
-    return df
-
-
-
 # -- create pages --
 
 ## title & about the data
 st.write("""
          
-# Crime in Los Angeles [2020 - Present]
-**Data Source:** [Los Angeles City Crime Database](https://data.lacity.org/Public-Safety/Crime-Data-from-2020-to-Present/2nrs-mtv8)
+# Los Angeles Domestic Violence Calls [2020 - Present]
+**Data Source:** [Los Angeles Domestic Violence Calls Database](https://data.lacity.org/Public-Safety/Domestic-Violence-Calls-from-2020-to-Present/qq59-f26t/)
          
 """)
 
 ## system information
-st.caption(
-    f":black[Dataset Directory:]  `{os.path.join(data_dir,data)}`"
-)
+# st.caption(
+#     f":black[Dataset Directory:]  `{os.path.join(data_dir,data)}`"
+# )
 
 ## page links
-st.page_link("app.py", label="Home", icon="🏠")
-st.page_link("pages/select.py", label="Search", icon="1️⃣")
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    st.page_link("app.py", label="Home", icon="🏠")
+with col2:
+    st.page_link("pages/scan & filter.py", label="Scan & Filter", icon="1️⃣")
 # st.page_link("pages/page_2.py", label="Page 2", icon="2️⃣", disabled=True)
 # st.page_link("http://www.google.com", label="Google", icon="🌎")
 
 
 
-## show data
-# data = update(df, key = "AREA NAME")
-data = date_select(df, key = "DATE OCC")
-# data = time_select(df, key = "TIME OCC")
-st.write("### Data Table", data)
+# -- describe data --
 
+dict = {}
+for col in df.columns:
+    dict[col] = [df[col].dtype]
+dict.values()
 
-st.bar_chart(data, x="TIME OCC", y="Crm Cd 1", color="AREA NAME", use_container_width=True)
-st.bar_chart(data['AREA NAME'].value_counts(), use_container_width=True)
-st.map(data=data, latitude=data['LAT'], longitude=data['LON'], color=None, size=None, zoom=None, use_container_width=True)
+st.dataframe(pd.DataFrame(dict, index=['dtype']))

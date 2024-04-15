@@ -10,5 +10,5 @@
 
 ## Run
 ```
-streamlit run './streamlit/demo.py'
+streamlit run './app/app.py'
 ```
