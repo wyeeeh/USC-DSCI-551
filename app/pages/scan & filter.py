@@ -84,8 +84,8 @@ def multi_select(df, key):
     
 ### slider for numeric values
 def slider(df, key):
-    default_range = (round(round(df[key].max()/5)), round(df[key].max()*4/5))
-    range = st.slider(f"**Select range of {str(mapping_keys[key]).lower()}**", df[key].min(), df[key].max(),  default_range)
+    default_range = (round(df[key].max()/5) if df[key].max() > 0 else 0, round(df[key].max()*4/5) if df[key].max() > 0 else 80)
+    range = st.slider(f"**Select range of {str(mapping_keys[key]).lower()}**", df[key].min() if df[key].min() > 0 else 0, df[key].max() if df[key].max() > 0 else 100,  default_range)
     if not range:
         st.error(f"Please select a range of {str(mapping_keys[key]).lower()}.")
         return df
