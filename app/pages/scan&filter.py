@@ -70,13 +70,17 @@ mapping_keys = {
 
 ### multiselect for categories
 def multi_select(df, key):
-    default_list = list(set(df[key]))[:3]
+    default_list = list(set(df[key]))
+    default_list.sort()
+    default_list = default_list[:2]
     all_list = list(set(df[key]))
-    all_list.append("All")
     all_list.sort()
+    all_list.insert(0, "All Areas")
     choices = st.multiselect(f"**Choose {str(mapping_keys[key]).lower()}**", all_list, default_list)
     if not choices:
         st.error(f"Please select at least one {str(mapping_keys[key]).lower()}.")
+        return df
+    elif "All Areas" in choices:
         return df
     else:
         data = df[df[key].isin(choices)]
@@ -96,8 +100,8 @@ def slider(df, key):
 ### select for date & time
 def date_select(df, key):
     today = datetime.datetime.now()
-    default_range = (datetime.date(today.year, 1, 7), today)
-    range = st.date_input("Select date range", 
+    default_range = (datetime.date(today.year-1, 1, 1), today)
+    range = st.date_input("**Select date range**", 
                           default_range,
                           datetime.date(2020, 1, 1),
                           datetime.date(today.year, 12, 31),
@@ -117,9 +121,9 @@ def time_select(df, key):
     # now = datetime.datetime.now()
     col1, col2 = st.columns(2)
     with col1:
-        start_time = st.time_input(label = "Time start", value = datetime.time(0, 0), step=900)
+        start_time = st.time_input(label = "**Time start**", value = datetime.time(0, 0), step=900)
     with col2:
-        end_time = st.time_input(label = "Time end", value = datetime.time(23, 59), step=900)
+        end_time = st.time_input(label = "**Time end**", value = datetime.time(23, 59), step=900)
     range = [start_time, end_time]
     if not range:
         st.error("Please select a time range.")
@@ -146,35 +150,48 @@ def update(df, key):
 
 
 # -- create pages --
+
+## sidebar
+with st.sidebar:
+    home = st.page_link("app.py", label="Home", icon="🏠")
+    scan_filter = st.page_link("pages/scan&filter.py", label="Data Explorer", icon="🔍")
+    query = st.page_link("pages/query.py", label="Query Explorer", icon="⌨️")
+    edit = st.page_link("pages/edit.py", label="Data Editor", icon="📝")
+    
+
+## title & about the data
 st.write("""
          
 # Data Explorer
-**Data Source:** [Los Angeles Domestic Violence Calls Database](https://data.lacity.org/Public-Safety/Domestic-Violence-Calls-from-2020-to-Present/qq59-f26t/)
-         
+**Data Source:** [Los Angeles Domestic Violence Calls Database](https://data.lacity.org/Public-Safety/Domestic-Violence-Calls-from-2020-to-Present/qq59-f26t/)  
+**Data Updated:** 2020 - Present         
 """)
 
-## page links
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    st.page_link("app.py", label="Home", icon="🏠")
-with col2:
-    st.page_link("pages/scan & filter.py", label="Scan & Filter", icon="1️⃣")
-# st.page_link("pages/page_2.py", label="Page 2", icon="2️⃣", disabled=True)
-# st.page_link("http://www.google.com", label="Google", icon="🌎")
+
 
 ## filters
-st.write('## Area Selector')
+st.write('### 🗺️ Area Selector')
 data = multi_select(df, key = "AREA NAME")
-st.write('## Date Selector')
+st.write('### 📆 Date Selector')
 data = date_select(data, key = "DATE OCC")
-st.write('## Time Selector')
+st.write('### 🕘 Time Selector')
 data = time_select(data, key = "TIME OCC")
-st.write('## Victim Age Selector')
+st.write('### 🎚️ Victim Age Selector')
 data = slider(data, key = "Vict Age")
 
 ## show data
-st.write("## Data Table", data)
 
-st.bar_chart(data = data, x="TIME OCC", y="Crm Cd 1", color="AREA NAME", use_container_width=True)
-st.bar_chart(data = data['AREA NAME'].value_counts(), use_container_width=True)
-st.map(data=data, latitude=data['LAT'], longitude=data['LON'], color=None, size=None, zoom=None, use_container_width=True)
+tab1, tab2, tab3 = st.tabs(["🗺️ Map","📈 Chart", "🗃 Data"])
+with tab1:
+    st.write("### Crime Distribution")
+    st.map(data=data, latitude=data['LAT'], longitude=data['LON'], color=None, size=None, zoom=None, use_container_width=True)
+with tab2:
+    st.write('### Bar Chart')
+    st.bar_chart(data = data, x="TIME OCC", y="Crm Cd 1", color="AREA NAME", use_container_width=True)
+with tab3:
+    st.write('### Data Result')
+    st.write(data[['TIME OCC', 'Crm Cd 1', 'AREA NAME']], use_container_width=True)
+
+# st.bar_chart(data = data, x="TIME OCC", y="Crm Cd 1", color="AREA NAME", use_container_width=True)
+# st.bar_chart(data = data['AREA NAME'].value_counts(), use_container_width=True)
+# st.map(data=data, latitude=data['LAT'], longitude=data['LON'], color=None, size=None, zoom=None, use_container_width=True)

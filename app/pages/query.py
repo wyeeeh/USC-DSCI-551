@@ -5,6 +5,7 @@ import os
 import datetime
 import time
 
+
 # -- data repo --
 data_dir = os.path.join(os.getcwd(), "data")
 data = "sample_data.csv"
@@ -62,49 +63,12 @@ mapping_keys = {
 }
 
 # -- config functions --
-# @st.cache_data(experimental_allow_widgets=True)
-## add data
-def add(df, key, value):
-    df[key] = value
-    return df
+# @st.cache_data
 
-## drop data
-def drop(df, remove_key="AREA NAME"):
-    df = df.drop(remove_key, axis=1)
-    return df
-
-## sort data
-def sort(df, sort_key="DR_NO", sort_order="asc"):
-    df = df.sort_values(by=sort_key, ascending=sort_order)
-    return df
-
-## select data
-def select(df, select_key):
-    return df[select_key]
-
-## filter data
-def filter(df, filter_key="AREA NAME", filter_value="Hollywood"):
-    df = df[df[filter_key] == filter_value]
-    return df
-
-## slice data
-def slice(df, start=0, end=10):
-    df = df[start:end]
-    return df
-
-## map data
-def map(df, map_key="AREA NAME"):
-    return df[map_key].value_counts()
-
-## group data
-def group(df, group_key="AREA NAME"):
-    df = df.groupby(group_key).count()
-    return df
-
-## summarize data
-def summarize(df):
-    return df.describe()
-
+## query functions
+def query_data(df, query):
+    data = df
+    return data
 
 
 # -- create pages --
@@ -118,40 +82,33 @@ with st.sidebar:
     
 
 ## title & about the data
+## title & about the data
 st.write("""
          
-# Los Angeles Domestic Violence Calls
-
-         
+# Query Explorer
 **Data Source:** [Los Angeles Domestic Violence Calls Database](https://data.lacity.org/Public-Safety/Domestic-Violence-Calls-from-2020-to-Present/qq59-f26t/)  
-**Data Updated:** 2020 - Present
- 
+**Data Updated:** 2020 - Present         
 """)
 
-## system information
-# st.caption(
-#     f":black[Dataset Directory:]  `{os.path.join(data_dir,data)}`"
-# )
+## query data
+st.write('### ⌨️ SQL Query')
+user_query = st.text_area("**Write your query below and press `Ctrl + Enter` to run:**", 
+                           value="SELECT * \n"
+                           "FROM CrimeData \n"
+                           "LIMIT 10",
+                           height = 200,
+                           placeholder="SELECT * \n"
+                           "FROM CrimeData \n"
+                           "LIMIT 10",
+                           label_visibility="visible")
 
-
-
-# -- describe data --
-
-dict = {}
-for col in df.columns:
-    dict[col] = [df[col].dtype]
-dict.values()
-
-st.write('### 💾 Dataset Overview')
-st.dataframe(pd.DataFrame(dict, index=['dtype']))
-
-st.write('### 📑 Database Entity Relationship')
-st.container(height=300)
-
-st.write('### 👩‍💻 Contact Us')
-st.write("""
-We are a team of masters in data science at University of California. Please contact us if you have any questions.  
-- Ye Wang: [ywang115@usc.edu](mailto:ywang115@usc.edu)
-- Jie Bian: [jiebian@usc.edu](mailto:jiebian@usc.edu)
-- Jiani Tang: [jianitan@usc.edu](mailto:jianitan@usc.edu)
-""")
+## query result
+tab1, tab2 = st.tabs(["🔢 Data","📋 Query"])
+with tab1:
+    st.write('### Data Result')
+    st.write(query_data(df, user_query))
+with tab2:
+    st.write('### Query Executed')
+    st.code(f"""
+    {user_query}
+    """)
