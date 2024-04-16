@@ -1,6 +1,11 @@
 import mysql.connector
 from mysql.connector import Error
 
+HOST = 'localhost'
+USER = 'root'
+PASSWORD = 'dsci-551'
+#DB = 'DSCI551Project'
+
 #connet to the database
 def create_db_connection(host_name, user_name, user_password, db_name):
     connection = None

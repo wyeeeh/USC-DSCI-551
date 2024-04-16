@@ -72,7 +72,7 @@ def multi_select(df, key):
     elif "All Areas" in choices:
         return df
     else:
-        data = df[df[key].isin(choices)]
+        data = df[df[key].isin(choices)] #change into isin
         return data
     
 ### slider for numeric values
