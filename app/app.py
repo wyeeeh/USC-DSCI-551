@@ -5,23 +5,13 @@ import os
 import datetime
 import time
 
+
 # -- data repo --
 data_dir = os.path.join(os.getcwd(), "data")
-data = "sample_data.csv"
+data = "domestic_violence_calls.csv"
 
 # -- load data --
-df = pd.read_csv(os.path.join(data_dir,data)).set_index("DR_NO")
-## convert date & time format
-df['Date Rptd'] = pd.to_datetime(df['Date Rptd']).dt.strftime('%Y-%m-%d')
-df['DATE OCC'] = pd.to_datetime(df['DATE OCC']).dt.strftime('%Y-%m-%d')
-df['TIME OCC'] = df['TIME OCC'].astype(str).str.zfill(4)
-df['TIME OCC'] = pd.to_datetime(df['TIME OCC'], format='%H%M').dt.strftime('%H:%M')
-# -- data repo --
-data_dir = os.path.join(os.getcwd(), "data")
-data = "sample_data.csv"
-
-# -- load data --
-df = pd.read_csv(os.path.join(data_dir,data)).set_index("DR_NO")
+df = pd.read_csv(os.path.join(data_dir,data))
 ## convert date & time format
 df['Date Rptd'] = pd.to_datetime(df['Date Rptd']).dt.strftime('%Y-%m-%d')
 df['DATE OCC'] = pd.to_datetime(df['DATE OCC']).dt.strftime('%Y-%m-%d')
@@ -128,25 +118,26 @@ st.write("""
  
 """)
 
-## system information
-# st.caption(
-#     f":black[Dataset Directory:]  `{os.path.join(data_dir,data)}`"
-# )
-
-
 
 # -- describe data --
 
 dict = {}
-for col in df.columns:
-    dict[col] = [df[col].dtype]
-dict.values()
+subset = df.dropna()
+for col in subset.columns:
+    if subset is not None and subset[col].iloc[0] is not None:
+        dict[col] = [type(subset[col].iloc[0]).__name__, subset[col].iloc[0]]
+    else:
+        dict[col] = [type(df[col].iloc[0]).__name__, df[col].iloc[0]]
 
 st.write('### 💾 Dataset Overview')
-st.dataframe(pd.DataFrame(dict, index=['dtype']))
+st.write(pd.DataFrame(dict, index=['Data Type', 'Sample']), use_container_width=True)
 
-st.write('### 📑 Database Entity Relationship')
-st.container(height=300)
+st.write('### 📑 Entity Relationship Diagram')
+
+with st.container(height=300):
+    st.write("""
+    #### 📝 Entity Relationship Diagram
+    """)
 
 st.write('### 👩‍💻 Contact Us')
 st.write("""

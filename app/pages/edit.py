@@ -8,21 +8,10 @@ import time
 
 # -- data repo --
 data_dir = os.path.join(os.getcwd(), "data")
-data = "sample_data.csv"
+data = "domestic_violence_calls.csv"
 
 # -- load data --
-df = pd.read_csv(os.path.join(data_dir,data)).set_index("DR_NO")
-## convert date & time format
-df['Date Rptd'] = pd.to_datetime(df['Date Rptd']).dt.strftime('%Y-%m-%d')
-df['DATE OCC'] = pd.to_datetime(df['DATE OCC']).dt.strftime('%Y-%m-%d')
-df['TIME OCC'] = df['TIME OCC'].astype(str).str.zfill(4)
-df['TIME OCC'] = pd.to_datetime(df['TIME OCC'], format='%H%M').dt.strftime('%H:%M')
-# -- data repo --
-data_dir = os.path.join(os.getcwd(), "data")
-data = "sample_data.csv"
-
-# -- load data --
-df = pd.read_csv(os.path.join(data_dir,data)).set_index("DR_NO")
+df = pd.read_csv(os.path.join(data_dir,data))
 ## convert date & time format
 df['Date Rptd'] = pd.to_datetime(df['Date Rptd']).dt.strftime('%Y-%m-%d')
 df['DATE OCC'] = pd.to_datetime(df['DATE OCC']).dt.strftime('%Y-%m-%d')
