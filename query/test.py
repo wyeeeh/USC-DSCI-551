@@ -1,4 +1,3 @@
-# Import necessary functions from the db_operations module
 from db_operations import query_all_areas
 
 # Database credentials
