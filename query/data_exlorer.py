@@ -27,9 +27,9 @@ def collect_user_input():
     """Prompt the user for query parameters and return as a dictionary."""
     print("Enter query parameters (leave blank to include all records for that field).")
     area = input("AREA codes (comma-separated, e.g., 1,2,21): ")
-    date_range = input("DATE range (YYYY-MM-DD - YYYY-MM-DD): ")
-    time_range = input("Time range (HH:MM - HH:MM): ")
-    age_range = input("Victim Age range (e.g., 10 - 35): ")
+    date_range = input("DATE OCC range (YYYY-MM-DD to YYYY-MM-DD): ")
+    time_range = input("Time OCC range (HH:MM to HH:MM): ")
+    age_range = input("Victim Age range (e.g., 10 to 35): ")
 
     return {
         'AREA': area,
@@ -45,16 +45,16 @@ def build_query(params):
         areas = params['AREA'].replace(" ", "").split(',')
         conditions.append(f"AREA IN ({', '.join(areas)})")
     if params['DATE']:
-        dates = params['DATE'].split('-')
-        conditions.append(f"`Date Rptd` BETWEEN '{dates[0].strip()}' AND '{dates[1].strip()}'")
+        dates = params['DATE'].split('to')
+        conditions.append(f"`DATE_OCC` BETWEEN '{dates[0].strip()}' AND '{dates[1].strip()}'")
     if params['TIME']:
-        times = params['TIME'].split('-')
-        conditions.append(f"`TIME OCC` BETWEEN '{times[0].strip()}' AND '{times[1].strip()}'")
+        times = params['TIME'].split('to')
+        conditions.append(f"`TIME_OCC` BETWEEN '{times[0].strip()}' AND '{times[1].strip()}'")
     if params['AGE']:
-        ages = params['AGE'].split('-')
-        conditions.append(f"`Vict Age` BETWEEN {ages[0].strip()} AND {ages[1].strip()}")
+        ages = params['AGE'].split('to')
+        conditions.append(f"`Vict_Age` BETWEEN {ages[0].strip()} AND {ages[1].strip()}")
 
-    query = "SELECT * FROM CrimeIncident"
+    query = "SELECT * FROM CrimeIncident JOIN Victim ON CrimeIncident.DR_NO = Victim.DR_NO"
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
     return query
