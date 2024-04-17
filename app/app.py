@@ -51,6 +51,79 @@ mapping_keys = {
     "LON": "Longitude"
 }
 
+
+# -- Table Schema --
+
+## CrimeIncident
+CrimeIncident_schema = [
+    ("DR_NO", "VARCHAR(255)", True),
+    ("Date_Rptd", "DATE", False),
+    ("DATE_OCC", "DATE", False),
+    ("TIME_OCC", "VARCHAR(10)", False),
+    ("AREA", "VARCHAR(10)", False),
+    ("Rpt_Dist_No", "VARCHAR(10)", False),
+    ("Part_1_2", "INT", False),
+    ("Mocodes", "TEXT", False),
+    ("Status", "VARCHAR(50)", False),
+    ("Status_Desc", "VARCHAR(255)", False)
+]
+CrimeIncident = pd.DataFrame(CrimeIncident_schema, columns=["Schema", "Data Type", "Primary Key"])
+CrimeIncident["Primary Key"] = CrimeIncident["Primary Key"].astype(bool)
+
+## Area
+Area_schema = [
+    ("AREA", "VARCHAR(10)", True),
+    ("AREA_NAME", "VARCHAR(255)", False)
+]
+Area = pd.DataFrame(Area_schema, columns=["Schema", "Data Type", "Primary Key"])
+Area["Primary Key"] = Area["Primary Key"].astype(bool)
+
+## Victim
+Victim_schema = [
+    ("DR_NO", "VARCHAR(255)", True, "CrimeIncident(DR_NO)"),
+    ("Vict_Age", "VARCHAR(10)", False, None),
+    ("Vict_Sex", "VARCHAR(1)", False, None),
+    ("Vict_Descent", "VARCHAR(10)", False, None)
+]
+Victim = pd.DataFrame(Victim_schema, columns=["Schema", "Data Type", "Primary Key", "Foreign Key"])
+Victim["Primary Key"] = Victim["Primary Key"].astype(bool)
+
+## IncidentCrimeCode
+IncidentCrimeCode_schema = [
+    ("DR_NO", "VARCHAR(255)", True, "CrimeIncident(DR_NO)"),
+    ("Crime_Code", "VARCHAR(255)", False, None),
+    ("Cri_Cd1", "VARCHAR(255)", False, None),
+    ("Cri_Cd2", "VARCHAR(255)", False, None),
+    ("Cri_Cd3", "VARCHAR(255)", False, None),
+    ("Cri_Cd4", "VARCHAR(255)", False, None)
+]
+IncidentCrimeCode = pd.DataFrame(IncidentCrimeCode_schema, columns=["Schema", "Data Type", "Primary Key", "Foreign Key"])
+IncidentCrimeCode["Primary Key"] = IncidentCrimeCode["Primary Key"].astype(bool)
+
+## PremiseWeapon
+PremiseWeapon_schema = [
+    ("DR_NO", "VARCHAR(255)", True, "CrimeIncident(DR_NO)"),
+    ("Premis_Cd", "VARCHAR(255)", False, None),
+    ("Premis_Desc", "VARCHAR(255)", False, None),
+    ("Weapon_Used_Cd", "VARCHAR(255)", False, None),
+    ("Weapon_Desc", "VARCHAR(255)", False, None)
+]
+PremiseWeapon = pd.DataFrame(PremiseWeapon_schema, columns=["Schema", "Data Type", "Primary Key", "Foreign Key"])
+PremiseWeapon["Primary Key"] = PremiseWeapon["Primary Key"].astype(bool)
+
+## Location
+Location_schema = [
+    ("DR_NO", "VARCHAR(255)", True, "CrimeIncident(DR_NO)"),
+    ("Loc", "VARCHAR(255)", False, None),
+    ("Cro_Street", "VARCHAR(255)", False, None),
+    ("Lat", "DOUBLE", False, None),
+    ("Lon", "DOUBLE", False, None)
+]
+Location = pd.DataFrame(Location_schema, columns=["Schema", "Data Type", "Primary Key", "Foreign Key"])
+Location["Primary Key"] = Location["Primary Key"].astype(bool)
+
+
+
 # -- config functions --
 # @st.cache_data(experimental_allow_widgets=True)
 ## add data
@@ -129,15 +202,26 @@ for col in subset.columns:
     else:
         dict[col] = [type(df[col].iloc[0]).__name__, df[col].iloc[0]]
 
-st.write('### 💾 Dataset Overview')
+## Table Overview
+st.write('### 💾 Data Overview')
 st.write(pd.DataFrame(dict, index=['Data Type', 'Sample']), use_container_width=True)
 
-st.write('### 📑 Entity Relationship Diagram')
+## Table Schema
+st.write('### 📑 Database Entity Relationship ')
 
-with st.container(height=300):
-    st.write("""
-    #### 📝 Entity Relationship Diagram
-    """)
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["**1️⃣ CrimeIncident**", "**2️⃣ Area**", "**3️⃣ Victim**", "**4️⃣IncidentCrimeCode**", "**5️⃣ PremiseWeapon**", "**6️⃣ Location**"])
+with tab1:
+    st.write(CrimeIncident)
+with tab2:
+    st.write(Area)
+with tab3:
+    st.write(Victim)
+with tab4:
+    st.write(IncidentCrimeCode)
+with tab5:
+    st.write(PremiseWeapon)
+with tab6:
+    st.write(Location)
 
 st.write('### 👩‍💻 Contact Us')
 st.write("""
