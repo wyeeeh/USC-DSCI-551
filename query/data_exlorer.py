@@ -1,27 +1,26 @@
-# import mysql.connector
-# from mysql.connector import Error
+import mysql.connector
+from mysql.connector import Error
+import pandas as pd
 
-# HOST = 'localhost'
-# USER = 'root'
-# PASSWORD = 'dsci-551'
-# #DB = 'DSCI551Project'
+# Database credentials
+HOST = 'localhost'
+USER = 'root'
+PASSWORD = 'lily1221'
 
-# #connet to the database
-# def create_db_connection(host_name, user_name, user_password, db_name):
-#     connection = None
-#     try:
-#         connection = mysql.connector.connect(
-#             host=host_name,
-#             user=user_name,
-#             password=user_password,
-#             database=db_name
-#         )
-#         print("MySQL Database connection successful")
-#     except Error as e:
-#         print(f"The error '{e}' occurred")
-#     return connection
-
-# data_explorer.py
+def create_db_connection(area_code, host_name, user_name, user_password):
+    """Create a database connection."""
+    db_name = f"Crime_{area_code}"
+    try:
+        connection = mysql.connector.connect(
+            host=host_name,
+            user=user_name,
+            password=user_password,
+            database=db_name
+        )
+        return connection
+    except Error as e:
+        print(f"Failed to connect to {db_name}: {e}")
+        return None
 
 def collect_user_input():
     """Prompt the user for query parameters and return as a dictionary."""
@@ -58,3 +57,33 @@ def build_query(params):
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
     return query
+
+def main():
+    # Collect user inputs
+    params = collect_user_input()
+    # Build the SQL query based on user inputs
+    query = build_query(params)
+    # Execute the query on specified databases
+    all_results = pd.DataFrame()
+    if params['AREA']:
+        areas = params['AREA'].replace(" ", "").split(',')
+        for area_code in areas:
+            connection = create_db_connection(area_code, HOST, USER, PASSWORD)
+            if connection:
+                result = execute_query(connection, query)
+                result['Area_Code'] = area_code  # Add an Area_Code column to distinguish results
+                all_results = pd.concat([all_results, result], ignore_index=True)
+    else:
+        # If no specific area is mentioned, query all areas from 1 to 21
+        for area_code in range(1, 22):
+            connection = create_db_connection(str(area_code), HOST, USER, PASSWORD)
+            if connection:
+                result = execute_query(connection, query)
+                result['Area_Code'] = str(area_code)
+                all_results = pd.concat([all_results, result], ignore_index=True)
+
+    # Print all results
+    print(all_results)
+
+if __name__ == "__main__":
+    main()
