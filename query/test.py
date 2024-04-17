@@ -1,4 +1,4 @@
-from db_operations import query_all_areas
+from query.query_explorer import query_all_areas
 
 # Database credentials
 HOST = 'localhost'

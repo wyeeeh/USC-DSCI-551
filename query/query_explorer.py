@@ -2,6 +2,11 @@ import mysql.connector
 from mysql.connector import Error
 import pandas as pd
 
+# Database credentials
+HOST = 'localhost'
+USER = 'root'
+PASSWORD = 'lily1221'
+
 def create_db_connection(area_code, host_name, user_name, user_password):
     """Create a database connection."""
     db_name = f"Crime_{area_code}"
@@ -12,20 +17,22 @@ def create_db_connection(area_code, host_name, user_name, user_password):
             password=user_password,
             database=db_name
         )
-        #print(f"Connection to {db_name} successful")
         return connection
     except Error as e:
         print(f"Failed to connect to {db_name}: {e}")
         return None
 
+    
 def execute_query(connection, query):
     """Execute a query and return results as a DataFrame."""
     try:
-        data_frame = pd.read_sql_query(query, connection)
-        return data_frame
+        if connection is not None:
+            data_frame = pd.read_sql(query, connection)
+            connection.close()
+            return data_frame
     except Error as e:
-        print(f"An error occurred: {e}")
-        return pd.DataFrame()  # Return an empty DataFrame in case of error
+        print(f"Error '{e}' occurred")
+        return pd.DataFrame()
 
 def query_all_areas(query, host_name, user_name, user_password):
     """Execute a query across all 21 Crime databases and collect results into a DataFrame."""
@@ -38,3 +45,20 @@ def query_all_areas(query, host_name, user_name, user_password):
             all_results = pd.concat([all_results, result], ignore_index=True)
             connection.close()
     return all_results
+
+
+def main():
+    print("Please enter a SELECT SQL query to execute across all Crime databases.")
+    query = input("SQL Query: ")
+    if not query.lower().strip().startswith('select'):
+        print("Error: Only SELECT queries are allowed for security reasons.")
+        return
+
+    results = query_all_areas(query, HOST, USER, PASSWORD)
+    if not results.empty:
+        print(results)
+    else:
+        print("No data returned or an error occurred.")
+
+if __name__ == "__main__":
+    main()
