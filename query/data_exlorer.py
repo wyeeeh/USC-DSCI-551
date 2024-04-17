@@ -22,6 +22,7 @@ def create_db_connection(area_code, host_name, user_name, user_password):
         print(f"Failed to connect to {db_name}: {e}")
         return None
 
+
 def collect_user_input():
     """Prompt the user for query parameters and return as a dictionary."""
     print("Enter query parameters (leave blank to include all records for that field).")
@@ -45,10 +46,10 @@ def build_query(params):
         conditions.append(f"AREA IN ({', '.join(areas)})")
     if params['DATE']:
         dates = params['DATE'].split('-')
-        conditions.append(f"DATE BETWEEN '{dates[0].strip()}' AND '{dates[1].strip()}'")
+        conditions.append(f"`Date Rptd` BETWEEN '{dates[0].strip()}' AND '{dates[1].strip()}'")
     if params['TIME']:
         times = params['TIME'].split('-')
-        conditions.append(f"TIME BETWEEN '{times[0].strip()}' AND '{times[1].strip()}'")
+        conditions.append(f"`TIME OCC` BETWEEN '{times[0].strip()}' AND '{times[1].strip()}'")
     if params['AGE']:
         ages = params['AGE'].split('-')
         conditions.append(f"`Vict Age` BETWEEN {ages[0].strip()} AND {ages[1].strip()}")
@@ -57,6 +58,18 @@ def build_query(params):
     if conditions:
         query += " WHERE " + " AND ".join(conditions)
     return query
+
+
+def execute_query(connection, query):
+    """Execute a query and return results as a DataFrame."""
+    try:
+        if connection is not None:
+            data_frame = pd.read_sql(query, connection)
+            connection.close()
+            return data_frame
+    except Error as e:
+        print(f"Error '{e}' occurred")
+        return pd.DataFrame()
 
 def main():
     # Collect user inputs
