@@ -211,17 +211,17 @@ st.write('### 📑 Database Entity Relationship ')
 
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["**1️⃣ CrimeIncident**", "**2️⃣ Area**", "**3️⃣ Victim**", "**4️⃣IncidentCrimeCode**", "**5️⃣ PremiseWeapon**", "**6️⃣ Location**"])
 with tab1:
-    st.write(CrimeIncident)
+    st.write(CrimeIncident, use_container_width=True)
 with tab2:
-    st.write(Area)
+    st.write(Area, use_container_width=True)
 with tab3:
-    st.write(Victim)
+    st.write(Victim, use_container_width=True)
 with tab4:
-    st.write(IncidentCrimeCode)
+    st.write(IncidentCrimeCode, use_container_width=True)
 with tab5:
-    st.write(PremiseWeapon)
+    st.write(PremiseWeapon, use_container_width=True)
 with tab6:
-    st.write(Location)
+    st.write(Location, use_container_width=True)
 
 st.write('### 👩‍💻 Contact Us')
 st.write("""
