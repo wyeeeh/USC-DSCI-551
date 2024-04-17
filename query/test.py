@@ -1,34 +1,25 @@
-# Import the required functions
-from db_operations import execute_query, execute_query_all_areas
+# Import necessary functions from the db_operations module
+from db_operations import query_all_areas
+
+# Database credentials
+HOST = 'localhost'
+USER = 'root'
+PASSWORD = 'lily1221'
+
 
 def main():
-    while True:
-        # Get user input
-        area_code = input("Enter the area code (1-21) or 'all' to query all areas: ")
-        query = input("Enter your SQL query: ")
+    print("Please enter a SELECT SQL query to execute across all Crime databases.")
+    query = input("SQL Query: ")
+    if not query.lower().strip().startswith('select'):
+        print("Error: Only SELECT queries are allowed for security reasons.")
+        return
 
-        # Check if querying all areas
-        if area_code.lower() == 'all':
-            results = execute_query_all_areas(query)
-        else:
-            try:
-                area_code = int(area_code)  # Convert to integer
-                if 1 <= area_code <= 21:
-                    results = execute_query(area_code, query)
-                else:
-                    raise ValueError
-            except ValueError:
-                print("Invalid area code. Please enter a number between 1 and 21.")
-                continue
-
-        # Print results
-        print("Query results:")
+    results = query_all_areas(query, HOST, USER, PASSWORD)
+    if not results.empty:
         print(results)
-
-        # Ask if the user wants to continue
-        cont = input("Do you want to run another query? (yes/no): ")
-        if cont.lower() != 'yes':
-            break
+    else:
+        print("No data returned or an error occurred.")
 
 if __name__ == "__main__":
     main()
+

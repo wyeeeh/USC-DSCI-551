@@ -1,14 +1,10 @@
 import mysql.connector
 from mysql.connector import Error
+import pandas as pd
 
-HOST = 'localhost'
-USER = 'root'
-PASSWORD = 'dsci-551'
-#DB = 'DSCI551Project'
-
-#connet to the database
-def create_db_connection(host_name, user_name, user_password, db_name):
-    connection = None
+def create_db_connection(area_code, host_name, user_name, user_password):
+    """Create a database connection."""
+    db_name = f"Crime_{area_code}"
     try:
         connection = mysql.connector.connect(
             host=host_name,
@@ -16,35 +12,29 @@ def create_db_connection(host_name, user_name, user_password, db_name):
             password=user_password,
             database=db_name
         )
-        print("MySQL Database connection successful")
+        #print(f"Connection to {db_name} successful")
+        return connection
     except Error as e:
-        print(f"The error '{e}' occurred")
-    return connection
+        print(f"Failed to connect to {db_name}: {e}")
+        return None
 
-#close the connection
-def close_db_connection(connection):
-    if connection:
-        connection.close()
-        print("MySQL Database connection closed")
-
-#execute the query
 def execute_query(connection, query):
-    cursor = connection.cursor()
+    """Execute a query and return results as a DataFrame."""
     try:
-        cursor.execute(query)
-        connection.commit()
-        print("Query successful")
+        data_frame = pd.read_sql_query(query, connection)
+        return data_frame
     except Error as e:
-        print(f"The error '{e}' occurred")
+        print(f"An error occurred: {e}")
+        return pd.DataFrame()  # Return an empty DataFrame in case of error
 
-#execute the read query
-def execute_read_query(connection, query):
-    cursor = connection.cursor(dictionary=True)
-    result = None
-    try:
-        cursor.execute(query)
-        result = cursor.fetchall()
-        return result
-    except Error as e:
-        print(f"The error '{e}' occurred")
-
+def query_all_areas(query, host_name, user_name, user_password):
+    """Execute a query across all 21 Crime databases and collect results into a DataFrame."""
+    all_results = pd.DataFrame()
+    for area_code in range(1, 22):
+        connection = create_db_connection(area_code, host_name, user_name, user_password)
+        if connection is not None:
+            result = execute_query(connection, query)
+            result['Area_Code'] = area_code  # Add an Area_Code column to distinguish results
+            all_results = pd.concat([all_results, result], ignore_index=True)
+            connection.close()
+    return all_results
