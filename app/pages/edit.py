@@ -11,7 +11,7 @@ data_dir = os.path.join(os.getcwd(), "data")
 data = "domestic_violence_calls.csv"
 
 # -- load data --
-df = pd.read_csv(os.path.join(data_dir,data))
+df = pd.read_csv(os.path.join(data_dir,data)).set_index("DR_NO")
 ## convert date & time format
 df['Date Rptd'] = pd.to_datetime(df['Date Rptd']).dt.strftime('%Y-%m-%d')
 df['DATE OCC'] = pd.to_datetime(df['DATE OCC']).dt.strftime('%Y-%m-%d')
