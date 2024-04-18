@@ -54,6 +54,16 @@ mapping_keys = {
 # -- config functions --
 # @st.cache_data
 
+## query functions
+db_config = pd.read_json(os.path.join(os.getcwd(),'key.json'), typ = 'series').to_dict()
+host=db_config['host']
+user=db_config['user']
+password=db_config['password']
+
+# st.write(db_config)
+# st.write(host)
+# st.write(user)
+# st.write(password)
 
 ## filter functions
 

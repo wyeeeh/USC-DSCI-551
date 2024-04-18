@@ -1,18 +1,18 @@
 import pandas as pd
 import mysql.connector
 from mysql.connector import Error
+import os
 
 # Database connection configuration
-db_config = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'dsci-551'
-}
+## query functions
+key = pd.read_json(os.path.join(os.getcwd(),'key.json'), typ = 'series')
+db_config = key.to_dict()
 
 
 # Read the CSV file
-file_path = 'crimedata_processed.csv'
-data = pd.read_csv(file_path)
+data_dir = os.path.join(os.getcwd(), "data")
+file_path = "crimedata_processed.csv"
+data = pd.read_csv(os.path.join(data_dir,file_path))
 
 def create_database_connection(area):
     try:

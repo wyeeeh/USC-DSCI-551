@@ -226,7 +226,7 @@ with tab6:
 st.write('### 👩‍💻 Contact Us')
 st.write("""
 We are a team of masters in data science at University of California. Please contact us if you have any questions.  
-- Ye Wang: [ywang115@usc.edu](mailto:ywang115@usc.edu)
-- Jie Bian: [jiebian@usc.edu](mailto:jiebian@usc.edu)
-- Jiani Tang: [jianitan@usc.edu](mailto:jianitan@usc.edu)
+- **Ye Wang**: [ywang115@usc.edu](mailto:ywang115@usc.edu)
+- **Jie Bian**: [jiebian@usc.edu](mailto:jiebian@usc.edu)
+- **Jiani Tang**: [jianitan@usc.edu](mailto:jianitan@usc.edu)
 """)
