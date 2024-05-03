@@ -3,6 +3,3 @@ streamlit/playground.py
 .DS_Store
 app/.DS_Store
 query/.DS_Store
-query/.DS_Store
-key.json
-key.json

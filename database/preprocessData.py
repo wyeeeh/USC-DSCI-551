@@ -1,32 +1,41 @@
-import pandas as pd
-from datetime import datetime
-import os
+
 
 # Function to convert datetime format
-def convert_datetime(column):
-    # Assuming the original format is 'MM/DD/YYYY HH:MM:SS AM/PM'
-    return pd.to_datetime(data[column]).dt.strftime('%Y-%m-%d %H:%M:%S')
+# def convert_datetime(column):
+#     # Assuming the original format is 'MM/DD/YYYY HH:MM:SS AM/PM'
+#     return pd.to_datetime(data[column]).dt.strftime('%Y-%m-%d %H:%M:%S')
 
-# -- data repo --
-data_dir = os.path.join(os.getcwd(), "data")
-file_path = "domestic_violence_calls.csv"
-data = pd.read_csv(os.path.join(data_dir,file_path))
 
-# Apply the conversion function to the columns
-data['Date Rptd'] = convert_datetime('Date Rptd')
-data['DATE OCC'] = convert_datetime('DATE OCC')
+def process_data(df):
+    import pandas as pd
+    from datetime import datetime
+    import os
 
-# Remove the redundant column Crm Cd 1 because it is the same as Crm Cd.
-#data.drop(columns=['Crm Cd 1'], inplace=True)
     
+    print (f"Data loaded with {len(df)} rows.")
 
-# Print the processed data
-print(data.head())
+    # Apply the conversion function to the columns
+    df['Date Rptd'] = pd.to_datetime(df['Date Rptd'], format='%m/%d/%Y %H:%M:%S %p').dt.strftime('%Y-%m-%d')
+    df['DATE OCC'] = pd.to_datetime(df['DATE OCC'], format='%m/%d/%Y %H:%M:%S %p').dt.strftime('%Y-%m-%d')
+    df['TIME OCC'] = df['TIME OCC'].astype(str).str.zfill(4)
+    df['TIME OCC'] = pd.to_datetime(df['TIME OCC'], format='%H%M').dt.strftime('%H:%M:%S')
+    # df['Weapon Used Cd'] = df['Weapon Used Cd'].astype(int)
+    # df['Crm Cd 1'] = df['Crm Cd 1'].astype(int)
+    # df['Crm Cd 2'] = df['Crm Cd 2'].astype(int)
+    # df['Crm Cd 3'] = df['Crm Cd 3'].astype(int)
+    # df['Crm Cd 4'] = df['Crm Cd 4'].astype(int)
 
-# Save the processed DataFrame to a new CSV file
-output_file_path = 'crimedata_processed.csv'
-data.to_csv(os.path.join(data_dir,output_file_path), index=False)
+    print(f"Data processed with {len(df)} rows.")
 
-print(f"Data saved to {output_file_path}")
+    subset = df.dropna()
+    for col in subset.columns:
+        if subset is not None and subset[col].iloc[0] is not None:
+            print(col, type(subset[col].iloc[0]).__name__, subset[col].iloc[0])
+        else:
+            print(type(df[col].iloc[0]).__name__, df[col].iloc[0])
+
+    return df
 
 
+if __name__ == "__main__":
+    process_data()

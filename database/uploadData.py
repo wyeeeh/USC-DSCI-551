@@ -1,193 +1,261 @@
 import pandas as pd
 import mysql.connector
 from mysql.connector import Error
+from sqlalchemy import create_engine
 import os
+from preprocessData import process_data
 
-# Database connection configuration
-## query functions
-key = pd.read_json(os.path.join(os.getcwd(),'key.json'), typ = 'series')
+
+work_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
+# Read the key file and config MySQL database
+database_dir = os.path.join(work_dir, "database")
+key = pd.read_json(os.path.join(database_dir,'key.json'), typ = 'series')
 db_config = key.to_dict()
 
+# Print key
+for key, value in db_config.items():
+    print(f"{key}: {value}")
 
-# Read the CSV file
-data_dir = os.path.join(os.getcwd(), "data")
-file_path = "crimedata_processed.csv"
-data = pd.read_csv(os.path.join(data_dir,file_path))
+def read_data(file_name):
+    
+    # Read data
+    work_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    data_dir = os.path.join(work_dir, "data")
+    data = pd.read_csv(os.path.join(data_dir,file_name))
+    return data
 
-def create_database_connection(area):
+CrimeIncident_schema =  {
+                'DR_NO': ['int64'],
+                'Date Rptd': ['str'],
+                'DATE OCC': ['str'],
+                'TIME OCC': ['int64'],
+                'AREA': ['int64'],
+                'Rpt Dist No': ['int64'],
+                'Part 1-2': ['int64'],
+                'Crm Cd': ['int64'],
+                'Mocodes': ['str'],
+                'Premis Cd': ['int64'],
+                'Weapon Used Cd': ['int64'],
+                'Status': ['str']}
+
+
+Area_schema =  {
+ 'AREA': ['int64'],
+ 'AREA NAME': ['str']}
+
+Crime_schema =  {
+ 'DR_NO': ['int64'],
+ 'Crm Cd': ['int64'],
+ 'Crm Cd 1': ['int64'],
+ 'Crm Cd 2': ['int64'],
+ 'Crm Cd 3': ['int64'],
+ 'Crm Cd 4': ['int64']}
+
+Crime_info =  {
+ 'Crm Cd': ['int64'],
+ 'Crm Cd Desc': ['str']
+ }
+
+
+Victim_schema =  {
+ 'DR_NO': ['int64'],
+ 'Vict Age': ['int64'],
+ 'Vict Sex': ['str'],
+ 'Vict Descent': ['str']
+ }
+
+Premise_info =  {
+ 'Premis Cd': ['int64'],
+ 'Premis Desc': ['str']
+ }
+
+Weapon_info =  {
+ 'Weapon Used Cd': ['int64'],
+ 'Weapon Desc': ['str']
+ }
+
+Status_info =  {
+ 'Status': ['str'],
+ 'Status Desc': ['str']
+ }
+
+Location_schema =  {
+ 'DR_NO': ['int64'],
+ 'LOCATION': ['str'],
+ 'Cross Street': ['str'],
+ 'LAT': ['float64'],
+ 'LON': ['float64']
+ }
+
+# Create connection to the MySQL server
+def create_connection(db_config):
     try:
-        # First connect to the MySQL server without specifying the database
         conn = mysql.connector.connect(
             host=db_config['host'],
             user=db_config['user'],
             password=db_config['password'],
             auth_plugin='mysql_native_password'
         )
+        print("MySQL Database connection successful")
+        return conn
+    except Error as err:
+        print(f"Error: '{err}'")
+    
+
+def create_database(db_config, db_name):
+    try:
+        conn = create_connection(db_config)
         cursor = conn.cursor()
-        # Create a database name such as Crime_1
-        db_name = f'Crime_{int(area)}'  
-        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name}")
+        cursor.execute(
+            f"CREATE DATABASE IF NOT EXISTS {db_name}")
         conn.commit()
         cursor.close()
-        
-        # Connect to the latest database
-        conn = mysql.connector.connect(
-            host=db_config['host'],
-            user=db_config['user'],
-            password=db_config['password'],
-            database=db_name,
-            auth_plugin='mysql_native_password'
-        )
+        print(f"Database {db_name} created successfully")
+    except Error as err:
+        print(f"Error: '{err}'")
+
+def create_tables(db_config, db_name):
+    try:
+        conn = create_connection(db_config)
+        cursor = conn.cursor()
+        cursor.execute(f"USE {db_name}")
+
         if conn.is_connected():
             print(f"Connected to database {db_name}")
-            return conn
-    except Error as e:
-        print(f"Error: {e}")
-        return None
-    
-# Create tables
-def create_tables(conn):
-    cursor = conn.cursor()
-    try:
-        # CrimeIncident table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS CrimeIncident (
-            DR_NO VARCHAR(255) PRIMARY KEY,
-            Date_Rptd DATE,
-            DATE_OCC DATE,
-            TIME_OCC VARCHAR(10),
-            AREA VARCHAR(10),
-            Rpt_Dist_No VARCHAR(10),
-            Part_1_2 INT,
-            Mocodes TEXT,
-            Status VARCHAR(50),
-            Status_Desc VARCHAR(255)
-        );
-        """)
-        # Area table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS Area (
-            AREA VARCHAR(10) PRIMARY KEY,
-            AREA_NAME VARCHAR(255)
-        );
-        """)
-        # Victim table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS Victim (
-            DR_NO VARCHAR(255) PRIMARY KEY,
-            Vict_Age VARCHAR(10),
-            Vict_Sex VARCHAR(1),
-            Vict_Descent VARCHAR(10),
-            FOREIGN KEY (DR_NO) REFERENCES CrimeIncident(DR_NO)
-        );
-        """)
-        # IncidentCrimeCode table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS IncidentCrimeCode (
-            DR_NO VARCHAR(255),
-            Crime_Code VARCHAR(255),
-            Cri_Cd1 VARCHAR(255),
-            Cri_Cd2 VARCHAR(255),
-            Cri_Cd3 VARCHAR(255),
-            Cri_Cd4 VARCHAR(255),
-            PRIMARY KEY (DR_NO),
-            FOREIGN KEY (DR_NO) REFERENCES CrimeIncident(DR_NO)
-        );
-        """)
-        
-        # PremiseWeapon table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS PremiseWeapon (
-            DR_NO VARCHAR(255),
-            Premis_Cd VARCHAR(255),
-            Premis_Desc VARCHAR(255),
-            Weapon_Used_Cd VARCHAR(255),
-            Weapon_Desc VARCHAR(255),
-            PRIMARY KEY (DR_NO),
-            FOREIGN KEY (DR_NO) REFERENCES CrimeIncident(DR_NO)
-        );
-        """)
-        
-        # Location table
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS Location (
-            DR_NO VARCHAR(255),
-            Loc VARCHAR(255),
-            Cro_Street VARCHAR(255),
-            Lat DOUBLE,
-            Lon DOUBLE,
-            PRIMARY KEY (DR_NO),
-            FOREIGN KEY (DR_NO) REFERENCES CrimeIncident(DR_NO)
-        );
-        """)
 
-        conn.commit()
-        print("Tables created successfully")
-    except Error as e:
-        print(f"Error creating tables: {e}")
+            # CrimeIncident table
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS CrimeIncident (
+                DR_NO INT PRIMARY KEY,
+                Date_Rptd DATE,
+                DATE_OCC DATE,
+                TIME_OCC TIME,
+                AREA INT NULL,
+                Rpt_Dist_No INT,
+                Part_1_2 INT,
+                Mocodes VARCHAR(255),
+                Premis_Cd INT,
+                Weapon_Used_Cd INT,
+                Status VARCHAR(255)
+            );
+            """)
 
-def insert_data(conn, df, count):
-    cursor = conn.cursor()
-    for _, row in df.iterrows():
-        row = row.where(pd.notna(row), None)
+            # Area table
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS Area (
+                AREA PRIMARY KEY,
+                AREA_NAME VARCHAR(255)
+            );
+            """)
 
-        try:
-            # Insert data into the CrimeIncident table
+            # Crime table
             cursor.execute("""
-            INSERT INTO CrimeIncident (DR_NO, Date_Rptd, DATE_OCC, TIME_OCC, AREA, Rpt_Dist_No, Part_1_2, Mocodes, Status, Status_Desc)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE Date_Rptd=VALUES(Date_Rptd), DATE_OCC=VALUES(DATE_OCC), TIME_OCC=VALUES(TIME_OCC), Part_1_2=VALUES(Part_1_2), Mocodes=VALUES(Mocodes), Status=VALUES(Status), Status_Desc=VALUES(Status_Desc);
-            """, (row['DR_NO'], row['Date Rptd'], row['DATE OCC'], row['TIME OCC'], row['AREA'], row['Rpt Dist No'], row['Part 1-2'], row['Mocodes'], row['Status'], row['Status Desc']))
-            
-            
-            # Insert data into the Area table
-            cursor.execute("""
-            INSERT INTO Area (AREA, AREA_NAME)
-            VALUES (%s, %s)
-            ON DUPLICATE KEY UPDATE AREA_NAME=VALUES(AREA_NAME);
-            """, (row['AREA'], row['AREA NAME']))
-            count += 1
+            CREATE TABLE IF NOT EXISTS Crime (
+                DR_NO INT PRIMARY KEY,
+                Crm_Cd INT,
+                Crm_Cd1 INT NULL,
+                Crm_Cd2 INT NULL,
+                Crm_Cd3 INT NULL,
+                Crm_Cd4 INT NULL,
+                FOREIGN KEY (DR_NO) REFERENCES CrimeIncident(DR_NO)
+            );
+            """)
 
-            # Insert data into the Victim table
+            # Crime Info table
             cursor.execute("""
-            INSERT INTO Victim (DR_NO, Vict_Age, Vict_Sex, Vict_Descent)
-            VALUES (%s, %s, %s, %s);
-            """, (row['DR_NO'], row['Vict Age'], row['Vict Sex'], row['Vict Descent']))
-            
-            # Insert data into the PremiseWeapon table
-            cursor.execute("""
-            INSERT INTO PremiseWeapon (DR_NO, Premis_Cd, Premis_Desc, Weapon_Used_Cd, Weapon_Desc)
-            VALUES (%s, %s, %s, %s, %s);
-            """, (row['DR_NO'], row['Premis Cd'], row['Premis Desc'], row['Weapon Used Cd'], row['Weapon Desc']))
-            
-            # Insert data into the IncidentCrimeCode table
-            cursor.execute("""
-            INSERT INTO IncidentCrimeCode (DR_NO, Crime_Code, Cri_Cd1, Cri_Cd2, Cri_Cd3, Cri_Cd4)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            """, (row['DR_NO'], row['Crm Cd'], row['Crm Cd 1'], row['Crm Cd 2'], row['Crm Cd 3'], row['Crm Cd 4']))
+            CREATE TABLE IF NOT EXISTS CrimeInfo (
+                Crm_Cd INT PRIMARY KEY,
+                Crm_Cd_Desc VARCHAR(255),
+                FOREIGN KEY (Crm_Cd) REFERENCES Crime(Crm_Cd)
+            );
+            """)
 
+            # Victim table
             cursor.execute("""
-            INSERT INTO Location (DR_NO, Loc, Cro_Street, Lat, Lon)
-            VALUES (%s, %s, %s, %s, %s);
-            """, (row['DR_NO'], row['LOCATION'], row['Cross Street'], row['LAT'], row['LON']))
+            CREATE TABLE IF NOT EXISTS Victim (
+                DR_NO INT PRIMARY KEY,
+                Vict_Age INT,
+                Vict_Sex VARCHAR(255),
+                Vict_Descent VARCHAR(255),
+                FOREIGN KEY (DR_NO) REFERENCES CrimeIncident(DR_NO)
+            );
+            """)
+
+            # Premise table
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS Premise (
+                Premis_Cd INT PRIMARY KEY,
+                Premis_Desc VARCHAR(255)
+            );
+            """)
+
+            # Weapon table
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS Weapon (
+                Weapon_Used_Cd INT PRIMARY KEY,
+                Weapon_Desc VARCHAR(255)
+            );
+            """)
+
+            # Status table
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS Status (
+                Status VARCHAR(255) PRIMARY KEY,
+                Status_Desc VARCHAR(255)
+            );
+            """)
+
+            # Location table
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS Location (
+                DR_NO INT PRIMARY KEY,
+                Loc VARCHAR(255),
+                Cro_Street VARCHAR(255),
+                Lat DOUBLE,
+                Lon DOUBLE,
+                FOREIGN KEY (DR_NO) REFERENCES CrimeIncident(DR_NO)
+            );
+            """)
 
             conn.commit()
-            print("Data inserted successfully for DR_NO:", row['DR_NO'])
-        except Error as e:
-            print(f"Error inserting data: {e}")
-            conn.rollback()
-            
-    return count
+            cursor.close()
+            print("Tables created successfully")
+    except Error as err:
+        print(f"Error: '{err}'")
+        return None
 
 
-count = 0 #calculate the number of the total records
-for area in data['AREA'].unique(): #choose AREA as the partition key
-    df_area = data[data['AREA'] == area]
-    conn = create_database_connection(area)
-    if conn:
-        create_tables(conn)
-        count = insert_data(conn, df_area, count)
+
+if __name__ == "__main__":
+    data = process_data(read_data('domestic_violence_calls.csv'))
+    for DR_NO in data.head(1)['DR_NO'].astype(str):
+        db_name = 'Crime_' + str(DR_NO[2:4])
+        print(db_name)
+        create_database(db_config, db_name)
+        create_tables(db_config, db_name)
+    # insert CrimeIncident data
+    conn = create_connection(db_config)
+    if conn.is_connected():
+        cursor = conn.cursor()
+        cursor.execute(f"USE {db_name}")
+        data
+        conn.commit()
+        cursor.close()
         conn.close()
-        print(f"Processing complete for area: {area}")
+        print("Data inserted successfully")
         
-print(count)
+
+
+
+# count = 0 #calculate the number of the total records
+# for area in data['AREA'].unique(): #choose AREA as the partition key
+#     df_area = data[data['AREA'] == area]
+#     conn = create_database_connection(area)
+#     if conn:
+#         create_tables(conn)
+#         count = insert_data(conn, df_area, count)
+#         conn.close()
+#         print(f"Processing complete for area: {area}")
+        
+# print(count)
