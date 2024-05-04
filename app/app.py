@@ -22,31 +22,31 @@ df['TIME OCC'] = pd.to_datetime(df['TIME OCC'], format='%H%M').dt.strftime('%H:%
 # -- global variables --
 mapping_keys = {
     "DR_NO": "Records Number",
-    "Date Rptd": "Report Date",
-    "DATE OCC": "Occur Date",
-    "TIME OCC": "Occur Time",
+    "DATE_RPTD": "Report Date",
+    "DATE_OCC": "Occur Date",
+    "TIME_OCC": "Occur Time",
     "AREA": "Area Code",
-    "AREA NAME": "Area",
-    "Rpt Dist No": "Report District Number",
-    "Part 1-2": "Part 1-2",
-    "Crm Cd": "Crime Code",
-    "Crm Cd Desc": "Crime",
-    "Mocodes": "Mocodes",
-    "Vict Age": "Victim Age",
-    "Vict Sex": "Victim Sex",
-    "Vict Descent": "Victim Descent",
-    "Premis Cd": "Premise Code",
-    "Premis Desc": "Premise",
-    "Weapon Used Cd": "Weapon Used Code",
-    "Weapon Desc": "Weapon",
-    "Status": "Status Code",
-    "Status Desc": "Status",
-    "Crm Cd 1": "Crime Code 1",
-    "Crm Cd 2": "Crime Code 2",
-    "Crm Cd 3": "Crime Code 3",
-    "Crm Cd 4": "Crime Code 4",
+    "AREA_NAME": "Area",
+    "RPT_DIST_NO": "Report District Number",
+    "Part_1_2": "Part 1-2",
+    "CRM_CD": "Crime Code",
+    "CRM_CD_DESC": "Crime",
+    "MOCODES": "Mocodes",
+    "VICT_AGE": "Victim Age",
+    "VICT_SEX": "Victim Sex",
+    "VICT_DESCENT": "Victim Descent",
+    "PREMIS_CD": "Premise Code",
+    "PREMIS_DESC": "Premise",
+    "WEAPON_USED_CD": "Weapon Used Code",
+    "WEAPON_DESC": "Weapon",
+    "STATUS": "Status Code",
+    "STATUS_DESC": "Status",
+    "CRM_CD_1": "Crime Code 1",
+    "CRM_CD_2": "Crime Code 2",
+    "CRM_CD_3": "Crime Code 3",
+    "CRM_CD_4": "Crime Code 4",
     "LOCATION": "Location",
-    "Cross Street": "Cross Street",
+    "CROSS_STREET": "Cross Street",
     "LAT": "Latitude",
     "LON": "Longitude"
 }
@@ -175,9 +175,9 @@ def summarize(df):
 ## sidebar
 with st.sidebar:
     home = st.page_link("app.py", label="Home", icon="🏠")
-    scan_filter = st.page_link("pages/scan&filter.py", label="Data Explorer", icon="🔍")
-    query = st.page_link("pages/query.py", label="Query Explorer", icon="⌨️")
-    edit = st.page_link("pages/edit.py", label="Data Editor", icon="📝")
+    data_explorer = st.page_link("pages/data_explorer.py", label="Data Explorer", icon="🔍")
+    query_explorer = st.page_link("pages/query_explorer.py", label="Query Explorer", icon="⌨️")
+    editor = st.page_link("pages/editor.py", label="Data Editor", icon="📝")
     
 
 ## title & about the data

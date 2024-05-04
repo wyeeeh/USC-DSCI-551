@@ -1,5 +1,4 @@
 import pandas as pd
-from datetime import datetime
 import os
 import urllib.parse
 from sqlalchemy import create_engine
@@ -18,9 +17,9 @@ database_dir = os.path.join(work_dir, "database")
 key = pd.read_json(os.path.join(database_dir,'key.json'), typ = 'series')
 db_config = key.to_dict()
 
-# Print key
-for key, value in db_config.items():
-    print(f"{key}: {value}")
+# # Print key
+# for key, value in db_config.items():
+#     print(f"{key}: {value}")
 
 # -- Read data --
 def read_data(file_name):
@@ -40,9 +39,8 @@ def process_data(df):
 
     # Filter out domestic violence calls that are not in the correct area
     df = df[~(df['DR_NO'].astype(str).apply(lambda x: x[2:4]) != df['AREA'].astype(str).apply(lambda x: x.zfill(2)))]
-    
 
-    print(f"Data processed with {len(df)} rows.")
+    print(f"Data processed with {len(df)} rows in output.")
     return df
 
 # -- Show data types --
@@ -130,7 +128,6 @@ def create_connection(db_config):
             password=db_config['password'],
             auth_plugin='mysql_native_password'
         )
-        print("MySQL Database connection successful")
         return conn
     except Error as err:
         print(f"Error: '{err}'")
@@ -145,7 +142,7 @@ def reset_database(db_config, db_name):
         cursor.execute(f"DROP DATABASE IF EXISTS {db_name}")
         conn.commit()
         cursor.close()
-        print(f"Database {db_name} dropped successfully")
+        # print(f"Database {db_name} dropped successfully")
     except Error as err:
         print(f"Error: '{err}'")
 
@@ -159,7 +156,7 @@ def create_database(db_config, db_name):
             f"CREATE DATABASE IF NOT EXISTS {db_name}")
         conn.commit()
         cursor.close()
-        print(f"Database {db_name} created successfully")
+        # print(f"Database {db_name} created successfully")
     except Error as err:
         print(f"Error: '{err}'")
 
@@ -274,18 +271,19 @@ def create_tables_mysql_connector(db_config, db_name):
 
             conn.commit()
             cursor.close()
-            print("Tables created successfully")
+            # print("Tables created successfully")
     except Error as err:
         print(f"Error: '{err}'")
         return None
     
 # Upload data using SQLAlchemy
-def uplaod_data(data, db_config, db_name, rows=None):
+def uplaod_data(data, db_config, db_name, rows=None): # distributed database by db_name
     encoded_password = urllib.parse.quote_plus(db_config["password"])
-    print (f'mysql+mysqlconnector://{db_config["user"]}:{encoded_password}'+f'@{db_config["host"]}/{db_name}')
     try:
         engine = create_engine(f'mysql+mysqlconnector://{db_config["user"]}:{encoded_password}'+f'@{db_config["host"]}/{db_name}', echo=False)
         with engine.connect() as conn:
+            # print(f"Connected to database {db_name} successfully")
+
             data[Area_schema.keys()].drop_duplicates().dropna().to_sql(name = 'Area', con = engine, if_exists = 'append', index = False)
             data[Premise_schema.keys()].drop_duplicates().to_sql(name = 'Premise', con = engine, if_exists = 'append', index = False)
             data[Weapon_schema.keys()].drop_duplicates().dropna().to_sql(name = 'Weapon', con = engine, if_exists = 'append', index = False)
@@ -302,13 +300,13 @@ def uplaod_data(data, db_config, db_name, rows=None):
                 data[Victim_schema.keys()].to_sql(name = 'Victim', con = engine, if_exists = 'append', index = False)
                 data[Location_schema.keys()].to_sql(name = 'Location', con = engine, if_exists = 'append', index = False)
             conn.commit()
-            print("Data uploaded successfully")
+            # print("Data uploaded successfully")
     
     except Error as err:
         print(f"Error: '{err}'")
         return None
 
-def query_data(query, db_config, db_name=None):
+def execute_query(query, db_config, db_name=None):
     encoded_password = urllib.parse.quote_plus(db_config["password"])
     try:
         engine = create_engine(f'mysql+mysqlconnector://{db_config["user"]}:{encoded_password}'+f'@{db_config["host"]}', echo=False)
@@ -317,6 +315,7 @@ def query_data(query, db_config, db_name=None):
                 results = conn.execute(text(query))
                 conn.commit()
             else:
+                # print(f"Connected to database {db_name} successfully")
                 conn.execute(text(f"""USE {db_name};"""))
                 # print(f"Connected to database {db_name}")
                 conn.commit()
@@ -326,35 +325,30 @@ def query_data(query, db_config, db_name=None):
         print(f"Error: '{err}'")
         return None
 
+if __name__ == "__main__":
+    data = process_data(read_data(file_name = 'domestic_violence_calls.csv'))
 
+    # distributed database by area ID in DR_NO; 
+    area_id_lst = data['DR_NO'].astype(str).apply(lambda x: x[2:4]).unique() 
+    area_id_lst.sort()
 
-data = process_data(read_data(file_name = 'domestic_violence_calls.csv'))
-# reset_database(db_config, 'test_db')
+    # reset all databases
+    databases_list = execute_query(f"""SHOW DATABASES;""", db_config)
+    default_databases = ["information_schema", "mysql", "performance_schema", "sys"]
+    for i in databases_list:
+        if i[0] not in default_databases:
+            reset_database(db_config, i[0])
+    
+    print(execute_query(f"""SHOW DATABASES;""", db_config))
 
-print(query_data(f"""SHOW DATABASES;""", db_config))
-
-# print(query_data('SELECT * FROM CrimeIncident LIMIT 1', db_config, db_name = 'test_db'))
-
-# create database
-db_name_lst = data['DR_NO'].astype(str).apply(lambda x: x[2:4]).unique()
-db_name_lst.sort()
-# print(db_name_lst)
-
-# sum = 0
-for db_name in db_name_lst:
-    print(db_name)
-    print(f"Crime_{db_name}", len(data[data['DR_NO'].astype(str).apply(lambda x: x[2:4]) == db_name]))
-    sum += len(data[data['DR_NO'].astype(str).apply(lambda x: x[2:4]) == db_name])
-    print(sum)
-
-for db_name in db_name_lst:
-    db_name = 'Crime_' + str(db_name)
-    # create_database(db_config, db_name)
-    # create_tables_mysql_connector(db_config, db_name)
-    print(data[data['DR_NO'].astype(str).apply(lambda x: x[2:4]) == db_name].head(100))
-    uplaod_data(data[data['DR_NO'].astype(str).apply(lambda x: x[2:4]) == db_name], db_config, db_name)
-    # print(query_data(f"""SHOW DATABASES;""", db_config))
-    print(query_data(f"""SHOW TABLES;""", db_config, db_name = db_name))
-    print(query_data(f"""SELECT * FROM CrimeIncident LIMIT 10;""", db_config, db_name = db_name))
+    # create databases and upload data
+    for area_id in area_id_lst:
+        db_name = 'Crime_' + str(area_id)
+        create_database(db_config, db_name)
+        create_tables_mysql_connector(db_config, db_name)
+        subset = data[data['DR_NO'].astype(str).apply(lambda x: x[2:4]) == area_id]
+        uplaod_data(subset, db_config, db_name)
+        print(execute_query(f"""SHOW TABLES;""", db_config, db_name = db_name))
+        print(execute_query(f"""SELECT * FROM CrimeIncident LIMIT 1;""", db_config, db_name = db_name))
 
 
