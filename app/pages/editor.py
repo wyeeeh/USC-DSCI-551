@@ -334,7 +334,6 @@ st.write(st.session_state["my_key"]) # 👈 Show the value in Session State
 st.write("**Added rows:**")
 added_rows = st.session_state["my_key"]['added_rows']  # added_rows 
 st.code(added_rows)
-st.code(list(added_rows[0].keys()))
 
 st.write("**Deleted rows:**")
 del_rows = df[['DR_NO']].iloc[st.session_state["my_key"]['deleted_rows']].to_dict(orient='records')
